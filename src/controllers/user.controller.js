@@ -6,7 +6,7 @@ const userController = {
     // User registration (signup) - Optimized for performance
     signup: async (req, res) => {
         const startTime = Date.now(); // Performance tracking
-        
+
         const { username, email, password } = req.body;
 
         if (!username || !email || !password) {
@@ -38,26 +38,26 @@ const userController = {
             });
 
             await newUser.save();
-            
+
             const endTime = Date.now();
             console.log(`Signup completed in: ${endTime - startTime}ms`); // Performance log
-            
-            res.status(201).json({ 
+
+            res.status(201).json({
                 message: "User registered successfully",
-                success: true 
+                success: true
             });
 
         } catch (error) {
             console.error('Signup error:', error);
-            
+
             // ✅ Handle duplicate key error specifically
             if (error.code === 11000) {
                 const field = Object.keys(error.keyPattern)[0];
-                return res.status(409).json({ 
-                    message: `${field} already exists` 
+                return res.status(409).json({
+                    message: `${field} already exists`
                 });
             }
-            
+
             res.status(500).json({ message: "Internal server error" });
         }
     },
@@ -65,7 +65,7 @@ const userController = {
     // User login - Also optimized
     login: async (req, res) => {
         const startTime = Date.now();
-        
+
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -116,11 +116,22 @@ const userController = {
     // ✅ Additional utility method for getting user profile
     getProfile: async (req, res) => {
         try {
-            const userId = req.user.id; // From JWT middleware
+            // Check if authentication middleware ran and set req.user
+            if (!req.user || !req.user.id) {
+                return res.status(401).json({
+                    message: "Authentication required. Please provide a valid token.",
+                    success: false
+                });
+            }
+
+            const userId = req.user.id;
             const user = await User.findById(userId).select('-password');
-            
+
             if (!user) {
-                return res.status(404).json({ message: "User not found" });
+                return res.status(404).json({
+                    message: "User not found",
+                    success: false
+                });
             }
 
             res.status(200).json({
@@ -136,7 +147,10 @@ const userController = {
 
         } catch (error) {
             console.error('Get profile error:', error);
-            res.status(500).json({ message: "Internal server error" });
+            res.status(500).json({
+                message: "Internal server error",
+                success: false
+            });
         }
     }
 };

@@ -85,6 +85,7 @@ const gameController = {
             // Create game record
             const gameRecord = new gamesSchema({
                 userId,
+                username:user.username,
                 currentBet: numericBetAmount,
                 diceOutcome,
                 result,
